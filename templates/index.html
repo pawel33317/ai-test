@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ollama DB Interface</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>📂 Ollama DB browser</h1>
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="system-prompt-panel">
+                <h2>Clear conversation</h2>
+                <button id="clear-conversation">Clear</button>
+            </div>
+            <div class="system-prompt-panel">
+                <h2>System Prompt</h2>
+                <textarea id="system-prompt" placeholder="Enter system prompt here...">You are a helpful AI assistant.</textarea>
+                <button id="apply-system-prompt">Apply</button>
+            </div>
+            <div class="system-prompt-panel">
+                <h2>AI model</h2>
+                <input type="text" id="ai-model" name="ai-model" value="gemma3:4b" required>
+                <button id="apply-ai-model">Apply</button>
+            </div>
+            <div class="system-prompt-panel">
+                <h2>Web search</h2>
+            </div>
+            <div class="system-prompt-panel">
+                <h2>Use database</h2>
+            </div>
+        </div>
+        <div class="chat-container">     
+            <form id="chat-form">
+                <div class="container">
+                    <div id="status-loader"></div>
+                    <div class="status-content" id="status-content">🆗</div>
+                </div>
+                <input type="text" id="prompt" name="prompt" placeholder="Enter your question..." required>
+                <button type="submit">Send</button>
+            </form>
+            <div class="responses-container"></div>
+        </div>
+    </div>
+    <script src="/static/chat.js"></script>
+</body>
+</html>
