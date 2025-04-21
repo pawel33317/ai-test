@@ -9,7 +9,8 @@ const UI = {
     applySystemPromptButton: document.getElementById('apply-system-prompt'),
     aiModel: document.getElementById('ai-model'),
     applyAiModel: document.getElementById('apply-ai-model'),
-    clearConversation: document.getElementById('clear-conversation')
+    clearConversation: document.getElementById('clear-conversation'),
+    webSearchForm: document.getElementById('web-search-form')
 };
 
 // Status handling
@@ -29,7 +30,7 @@ const MessageManager = {
     createMessageElement(className, text) {
         const div = document.createElement('div');
         div.className = `response ${className}`;
-        div.textContent = text;
+        div.innerHTML = text;
         UI.responsesContainer.appendChild(div);
         div.scrollIntoView({ behavior: 'smooth' });
         return div;
@@ -73,6 +74,16 @@ const ApiService = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ai_model: model })
         });
+    },
+
+    async updateWebSearchSettings(settings) {
+        return await fetch('/update-web-search-settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        });
     }
 };
 
@@ -80,19 +91,33 @@ const ApiService = {
 async function handleChatSubmit(e) {
     StatusManager.startSpinner();
     e.preventDefault();
-    
+
+    const userMessages = Array.from(document.querySelectorAll('.response.user-message')).map(div => div.textContent);
+    const chatMessages = Array.from(document.querySelectorAll('.response.chat-message')).map(div => div.textContent);
+
     const userPrompt = UI.form.prompt.value;
     MessageManager.createMessageElement('user-message', userPrompt);
     const responseDiv = MessageManager.createMessageElement('chat-message', 'Thinking...');
     
     UI.submitButton.disabled = true;
-    
-    const response = await ApiService.sendChatMessage(new FormData(UI.form));
-    await MessageManager.streamResponse(responseDiv, response);
-    
-    UI.submitButton.disabled = false;
-    UI.form.reset();
-    StatusManager.stopSpinner();
+
+    const formData = new FormData(UI.form);
+    // Check if chat history should be included
+    if (document.getElementById('use-chat-history').checked) {
+        formData.append('user_questions', JSON.stringify(userMessages));
+        formData.append('user_responses', JSON.stringify(chatMessages));
+    }
+
+    try {
+        const response = await ApiService.sendChatMessage(formData);
+        await MessageManager.streamResponse(responseDiv, response);
+    } catch (err) {
+        StatusManager.setError('Failed to send chat message.');
+    } finally {
+        UI.submitButton.disabled = false;
+        UI.form.reset();
+        StatusManager.stopSpinner();
+    }
 }
 
 async function handleSystemPromptUpdate() {
@@ -106,6 +131,32 @@ async function handleSystemPromptUpdate() {
     } else {
         responseDiv.className = 'response system-error';
         responseDiv.textContent = 'Failed to update system prompt';
+    }
+}
+
+async function handleWebSearchUpdate(e) {alert('ssssss');
+    e.preventDefault(); // Prevent form submission
+    StatusManager.startSpinner();
+
+    const status = document.getElementById('web-search-status').value;
+    const pages = document.getElementById('web-search-pages').value;
+    alert('ssssss2');
+    MessageManager.createMessageElement('user-settings-request', '🔧 Web search settings update requested');
+    const responseDiv = MessageManager.createMessageElement('system-message', 'Updating web search settings...');
+
+    try {
+        const response = await ApiService.updateWebSearchSettings({ status, pages });
+        alert('Web search settings updated successfully!');
+        if (response.ok) {
+            responseDiv.innerHTML = `Web search settings updated successfully! New settings:<br>Status: <b>${status}</b>, Pages: <b>${pages}</b>`;
+        } else {
+            throw new Error('Failed to update Web search settings');
+        }
+    } catch (err) {
+        responseDiv.className = 'response system-error';
+        responseDiv.textContent = err.message;
+    } finally {
+        StatusManager.stopSpinner();
     }
 }
 
@@ -128,3 +179,4 @@ UI.form.addEventListener('submit', handleChatSubmit);
 UI.clearConversation.addEventListener('click', () => UI.responsesContainer.innerHTML = '');
 UI.applySystemPromptButton.addEventListener('click', handleSystemPromptUpdate);
 UI.applyAiModel.addEventListener('click', handleAiModelUpdate);
+UI.webSearchForm.addEventListener('submit', handleWebSearchUpdate);

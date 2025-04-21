@@ -5,3 +5,37 @@ uvicorn ollamaWebServer:app --reload
 
 pip install fastapi uvicorn jinja2
 pip install python-multipart
+
+
+Twoja wiedza trenowana jest do czerwiec 2023 i nie masz dostępu do internetu.  
+Dzisiaj jest 21.04.2025.
+
+Oceń poniższe pytanie:
+
+„kto był pierwszym królem polski”
+
+Pomyśl krok po kroku:
+1. Jaką odpowiedź na to pytanie znałeś(-aś) na dzień czerwiec 2023?  
+2. Czy ta sama odpowiedź obowiązuje również na dzień 21.04.2025?  
+   - Jeśli TAK – odpowiedź się nie zmieniła i pytanie jest „ponadczasowe” (stałe).  
+   - Jeśli NIE – odpowiedź się zmieniła i pytanie wymaga nowych danych (dynamiczne).  
+3. Wnioski: wypisz **tylko jedno słowo**:
+   - **tak**  (jeśli odpowiedź z cutoff i dzisiaj jest taka sama)  
+   - **nie** (jeśli odpowiedź się zmieniła)
+
+Odpowiedź ma zawierać **tylko jedno słowo**: tak albo nie.
+
+
+
+
+
+@app.post("/update-web-search-settings")
+async def update_web_search_settings(settings: WebSearchSettings):
+    """
+    Updates the web search settings.
+    """
+    global WEB_SEARCH_STATUS, WEB_SEARCH_PAGES
+    WEB_SEARCH_STATUS = settings.status
+    WEB_SEARCH_PAGES = settings.pages
+    debug_print(f"Updated web search settings: Status={WEB_SEARCH_STATUS}, Pages={WEB_SEARCH_PAGES}")
+    return {"status": "success", "settings": {"status": WEB_SEARCH_STATUS, "pages": WEB_SEARCH_PAGES}}

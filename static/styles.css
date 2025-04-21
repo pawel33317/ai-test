@@ -58,6 +58,11 @@ to {
     flex: 0 0 250px; /* Increased from 200px */
     overflow-y: auto;
     padding-right: 5px;
+    scrollbar-width: thin;
+    scrollbar-color: #a1caf4 transparent;
+
+    /* direction: rtl; */
+    text-align: left; /* żeby tekst nadal był po lewej */
 }
 
 .chat-container {
@@ -81,10 +86,12 @@ h1 {
 #chat-form {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin: 0px;
+    margin-top: 10px;
 }
 
-#ai-model {
+ 
+#ai-model, #web-search-pages, #web-search-status {
     width: 100%;
     flex: 1;
     padding: 12px;

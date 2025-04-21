@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <h1>📂 Ollama DB browser</h1>
+    <h1>🧠 Ollama DB browser</h1>
     <div class="main-container">
         <div class="left-panel">
             <div class="system-prompt-panel">
@@ -25,23 +25,48 @@
             </div>
             <div class="system-prompt-panel">
                 <h2>Web search</h2>
+                <form id="web-search-form">
+                    <div class="form-group">
+                        <h5>State:</h5>
+                        <select  id="web-search-status" name="status">
+                            <option value="auto" selected>Auto</option>
+                            <option value="always">Always</option>
+                            <option value="never">Never</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <h5>Pages:</h5>
+                        <input type="number" id="web-search-pages" name="pages" value="5" min="1" max="20">
+                    </div>
+                    <button id="apply-ai-model" type="submit">Apply</button>
+                </form>
+                <div id="web-search-results"></div>
             </div>
             <div class="system-prompt-panel">
                 <h2>Use database</h2>
             </div>
+            <div class="system-prompt-panel">
+                <h2>Use chat history</h2>
+                <label>
+                    <input type="checkbox" id="use-chat-history" name="use-chat-history" checked>
+                    Send chat history
+                </label>
+            </div>
         </div>
-        <div class="chat-container">     
+        <div class="chat-container">
+            <div class="responses-container"></div>
             <form id="chat-form">
                 <div class="container">
                     <div id="status-loader"></div>
                     <div class="status-content" id="status-content">🆗</div>
                 </div>
-                <input type="text" id="prompt" name="prompt" placeholder="Enter your question..." required>
+                <textarea rows="4"  type="text" id="prompt" name="prompt" placeholder="Enter your question..." required></textarea>
+                <!-- <input type="text" id="prompt" name="prompt" placeholder="Enter your question..." required> -->
                 <button type="submit">Send</button>
             </form>
-            <div class="responses-container"></div>
         </div>
     </div>
+
     <script src="/static/chat.js"></script>
 </body>
 </html>
