@@ -1,0 +1,11 @@
+Twoja wiedza jest jedynie do dnia 01.06.2023 
+Dzisiaj jest {{current_date}}.
+
+Oceń to pytanie: "{{question}}"
+
+Masz wypisac tylko 1 słowo "tak" lub "nie"
+
+Jeżli odpowiedź na to pytanie mogła się zmienić między 01.06.2023 a {{current_date}} odpowiedz "nie".
+Jeżeli odpowiedź na to pytanie nie mogła się zmienić między 01.06.2023 a {{current_date}} odpowiedz "tak"
+
+Odpowiedź ma zawierać tylko jedno słowo: tak albo nie.

@@ -6,6 +6,8 @@ from pydantic import BaseModel
 import ollama
 import asyncio
 from typing import Optional
+import aiPrompts
+from datetime import date
 
 # dodatkowe biblioteki do web search
 import requests
@@ -13,15 +15,14 @@ from bs4 import BeautifulSoup
 try:
     from googlesearch import search as google_search
 except ImportError:
-    # Jeśli pakiet "googlesearch-python" nie jest zainstalowany, można użyć alternatywnej implementacji
-    raise ImportError("Zainstaluj pakiet 'googlesearch-python' lub 'beautifulsoup4'.")
+    raise ImportError("Install packet 'googlesearch-python' lub 'beautifulsoup4'.")
 
 global SYSTEM_PROMPT
-SYSTEM_PROMPT = ""
+SYSTEM_PROMPT = "Your knowledge ends in 01.06.2023, Todays date is: "+ date.today().strftime('%d.%m.%Y') + "\nanswer the question only if you are sure you know the answer and you are sure the answer is correct as of " +  date.today().strftime('%d.%m.%Y')
 
 global WEB_SEARCH_STATUS, WEB_SEARCH_PAGES
 WEB_SEARCH_STATUS = "auto"
-WEB_SEARCH_PAGES = 5
+WEB_SEARCH_PAGES = 10
 
 global AI_MODEL
 AI_MODEL = "gemma3:4b"
@@ -30,9 +31,28 @@ global DEBUG
 DEBUG = True  # Set to True to enable debug prints
 
 def debug_print(*args):
-    """Prints debug information if DEBUG is True."""
     if DEBUG:
         print(*args)
+
+def find_helpful_urls(query):
+    debug_print(f"Searching the web for: {query}")
+    results = []
+    try:
+        for j in google_search(query, num_results=WEB_SEARCH_PAGES):
+            results.append(j)
+    except Exception as e:
+        debug_print(f"Error during web search: {e}")
+    return results
+
+def get_urls_content_plain_data(url):
+    try:
+        resp = requests.get(url, timeout=5)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        text = soup.get_text(separator=' ', strip=True)
+        return text
+    except Exception as e:
+        return None
 
 app = FastAPI()
 # Ustawienia szablonów HTML
@@ -55,80 +75,97 @@ async def chat_stream(
     Handles chat streaming. Optionally includes user questions and responses if provided.
     """
     async def stream():
-        debug_print(f"Received prompt: {prompt}")
+        debug_print(f"Received prompt: {prompt[0:80]}")
         
         # Parse user questions and responses if provided
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        debug_print(f"System prompt: {SYSTEM_PROMPT}")
+        finalFessages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        debug_print(f"System prompt: {SYSTEM_PROMPT[0:80]}")
         
+        searchNeeded = False
+        if WEB_SEARCH_STATUS == "auto":
+            debug_print(f"Web search question: {aiPrompts.get_do_you_know_the_answer_prompt(prompt)[0:50]}")
+            response = ollama.chat(
+                model=AI_MODEL,
+                messages=[
+                    {'role': 'user', 'content': aiPrompts.get_do_you_know_the_answer_prompt(prompt)}
+                ],
+                stream=False  # wyłącza streamowanie, dostajesz całą odpowiedź
+            )
+            answer = response['message']['content']
+            debug_print("[T/N] Model answer for do you know the answer:", answer)
+            if answer.lower().startswith("nie"):
+                searchNeeded = True
+        elif WEB_SEARCH_STATUS == "always":
+            searchNeeded = True
+
+        # Add conversaition history if available
         if user_questions and user_responses:
             user_questions_list = eval(user_questions)  # Convert JSON string to list
             user_responses_list = eval(user_responses)  # Convert JSON string to list
-            
             # Add user questions and responses to the messages
-            for question, response in zip(user_questions_list, user_responses_list):
-                messages.append({"role": "user", "content": question})
-                messages.append({"role": "assistant", "content": response})
-                debug_print(f"Adding history -> User: {question}, Assistant: {response}")
+            for question, response in zip(user_questions_list[-2:], user_responses_list[-2:]):
+                finalFessages.append({"role": "user", "content": "Previous user question: " + question})
+                finalFessages.append({"role": "assistant", "content": response})
+                debug_print(f"Adding history -> User: {question[0:50]}, Assistant: {response[0:50]}")
+    
+
+
+        #TODO: znaleźć słowa kluczowe po któych można wyszukiwać w internecie
+        if searchNeeded:
+            yield "meta: <b>Searching</b>\n"
+            urls = find_helpful_urls(prompt)
+            # for url in urls:
+                # yield f"meta: <a href='{url}'>{url}</a>\n"
+
+            if not urls:
+                yield "meta: <b>No results found</b>"
+                return
+            else:
+
+                for url in urls:
+                    urlParsedContent = get_urls_content_plain_data(url)
+                    if urlParsedContent:
+                        ###AI call
+                        debug_print(f"Requesting model to check data from: {url[0:80]}")
+                        isContentEnoughResponse = ollama.chat(
+                            model=AI_MODEL,
+                            messages=[
+                                {'role': 'system', 'content': SYSTEM_PROMPT},
+                                {'role': 'user', 'content': aiPrompts.get_is_the_answer_in_text(prompt, urlParsedContent)}],
+                            stream=False)
+                        isContentEnoughAnswer = isContentEnoughResponse['message']['content']
+                        debug_print(f"Up to date data from the Internet: " + urlParsedContent[0:100])
+                        debug_print("[T/N] Model answer is enough:", isContentEnoughAnswer)
+
+                        if isContentEnoughAnswer.lower().startswith("tak"):
+                            yield f"meta: <a href='{url}'>{url}</a>\n"
+                            finalFessages.append({"role": "user", "content": "Up to date data from the Internet: " + urlParsedContent})
+                            break
+                    else:
+                        debug_print(f"Error fetching content from {url[0:80]}. Skipping.")
+
+            finalFessages.append({"role": "user", "content": "Use only data provided from the Internet to respond. Detect the language used in below question and use this language to answer below question: \n" + prompt})
+        else:
+            yield "meta: <b>Search not needed</b>\n"
+            finalFessages.append({"role": "user", "content": prompt})
         
-        # Add the current user prompt
-        messages.append({"role": "user", "content": prompt})
-        debug_print(f"Final messages: {messages}")
+        for msg in finalFessages:
+            debug_print(f"[FINAL] message to chat: {msg['role']}: {msg['content'][0:120]}")
 
         # Stream the response
         stream = ollama.chat(
             model=AI_MODEL,
-            messages=messages,
+            messages=finalFessages,
             stream=True
         )
+
         for chunk in stream:
             await asyncio.sleep(0)
             content = chunk["message"]["content"]
-            debug_print(f"Streaming chunk: {content}")
+            # debug_print(f"Streaming chunk: {content}")
             yield f"data: {content}"
-
+        debug_print("End of response stream\n\n\n")
     return StreamingResponse(stream(), media_type="text/event-stream")
-
-# @app.post("/web-search")
-# async def web_search(query: str = Form(...), num_results: int = Form(5)):
-#     """
-#     Wykonuje prostą wyszukiwarkę: pobiera listę URL-i za pomocą googlesearch,
-#     następnie pobiera zawartość stron i zwraca czysty tekst (bez tagów HTML).
-#     """
-#     debug_print(f"Web search query: {query}, num_results: {num_results}")
-#     results = []
-#     # Pobranie URL-i z Google
-#     try:
-#         urls = list(google_search(query, num_results=num_results))
-#         debug_print(f"Found URLs: {urls}")
-#     except Exception as e:
-#         debug_print(f"Error during Google search: {e}")
-#         return JSONResponse({
-#             "error": "Błąd podczas wyszukiwania:",
-#             "details": str(e)
-#         }, status_code=500)
-
-#     # Parsowanie każdej strony i ekstrakcja tekstu
-#     for url in urls:
-#         try:
-#             resp = requests.get(url, timeout=5)
-#             resp.raise_for_status()
-#             soup = BeautifulSoup(resp.text, 'html.parser')
-#             text = soup.get_text(separator=' ', strip=True)
-#             results.append({
-#                 "url": url,
-#                 "content": text
-#             })
-#             debug_print(f"Processed URL: {url}")
-#         except Exception as e:
-#             debug_print(f"Error processing URL {url}: {e}")
-#             continue
-
-#     debug_print(f"Final web search results: {results}")
-#     return JSONResponse({
-#         "query": query,
-#         "results": results
-#     })
 
 class SystemPrompt(BaseModel):
     system_prompt: str
@@ -143,7 +180,7 @@ class WebSearchSettings(BaseModel):
 @app.post("/update-system-prompt")
 async def update_system_prompt(prompt: SystemPrompt):
     global SYSTEM_PROMPT
-    SYSTEM_PROMPT = prompt.system_prompt
+    SYSTEM_PROMPT = "Your knowledge ends in 01.06.2023, Todays date is: "+ date.today().strftime('%d.%m.%Y') + "\nanswer the question only if you are sure you know the answer and you are sure the answer is correct as of " +  date.today().strftime('%d.%m.%Y') + "\n" + prompt.system_prompt
     return {"status": "success"}
 
 @app.post("/update-ai-model")
@@ -154,9 +191,6 @@ async def update_system_prompt(aimodel: AiModel):
 
 @app.post("/update-web-search-settings")
 async def update_web_search_settings(settings: WebSearchSettings):
-    """
-    Updates the web search settings.
-    """
     global WEB_SEARCH_STATUS, WEB_SEARCH_PAGES
     WEB_SEARCH_STATUS = settings.status
     WEB_SEARCH_PAGES = settings.pages

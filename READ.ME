@@ -24,18 +24,3 @@ Pomyśl krok po kroku:
    - **nie** (jeśli odpowiedź się zmieniła)
 
 Odpowiedź ma zawierać **tylko jedno słowo**: tak albo nie.
-
-
-
-
-
-@app.post("/update-web-search-settings")
-async def update_web_search_settings(settings: WebSearchSettings):
-    """
-    Updates the web search settings.
-    """
-    global WEB_SEARCH_STATUS, WEB_SEARCH_PAGES
-    WEB_SEARCH_STATUS = settings.status
-    WEB_SEARCH_PAGES = settings.pages
-    debug_print(f"Updated web search settings: Status={WEB_SEARCH_STATUS}, Pages={WEB_SEARCH_PAGES}")
-    return {"status": "success", "settings": {"status": WEB_SEARCH_STATUS, "pages": WEB_SEARCH_PAGES}}

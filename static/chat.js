@@ -36,17 +36,35 @@ const MessageManager = {
         return div;
     },
     
-    async streamResponse(responseDiv, response) {
-        responseDiv.textContent = '';
+    async streamResponse(response) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
+        let searchDivCreated = false;
+        let responseDivCreated = false;
+        let searchInfoDiv = null;
+        let responseDiv = null;
 
         while (true) {
             const { value, done } = await reader.read();
             if (done) break;
+
             const chunk = decoder.decode(value, { stream: true });
-            responseDiv.textContent += chunk.replace(/^data: /gm, '');
-            responseDiv.scrollIntoView({ behavior: 'smooth' });
+
+            if (chunk.startsWith('meta')) {
+                if (!searchDivCreated) {
+                    searchDivCreated = true;
+                    searchInfoDiv = MessageManager.createMessageElement('search-message', '');
+                }
+                searchInfoDiv.innerHTML += chunk.replace(/^meta: /gm, ''); // Fixed: Use `innerHTML` instead of treating as a string
+                searchInfoDiv.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                if (!responseDivCreated) {
+                    responseDivCreated = true;
+                    responseDiv = MessageManager.createMessageElement('chat-message', '');
+                }
+                responseDiv.textContent += chunk.replace(/^data: /gm, '');
+                responseDiv.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     }
 };
@@ -97,7 +115,6 @@ async function handleChatSubmit(e) {
 
     const userPrompt = UI.form.prompt.value;
     MessageManager.createMessageElement('user-message', userPrompt);
-    const responseDiv = MessageManager.createMessageElement('chat-message', 'Thinking...');
     
     UI.submitButton.disabled = true;
 
@@ -110,7 +127,7 @@ async function handleChatSubmit(e) {
 
     try {
         const response = await ApiService.sendChatMessage(formData);
-        await MessageManager.streamResponse(responseDiv, response);
+        await MessageManager.streamResponse(response);
     } catch (err) {
         StatusManager.setError('Failed to send chat message.');
     } finally {
@@ -134,19 +151,17 @@ async function handleSystemPromptUpdate() {
     }
 }
 
-async function handleWebSearchUpdate(e) {alert('ssssss');
+async function handleWebSearchUpdate(e) {
     e.preventDefault(); // Prevent form submission
     StatusManager.startSpinner();
 
     const status = document.getElementById('web-search-status').value;
     const pages = document.getElementById('web-search-pages').value;
-    alert('ssssss2');
     MessageManager.createMessageElement('user-settings-request', '🔧 Web search settings update requested');
     const responseDiv = MessageManager.createMessageElement('system-message', 'Updating web search settings...');
 
     try {
         const response = await ApiService.updateWebSearchSettings({ status, pages });
-        alert('Web search settings updated successfully!');
         if (response.ok) {
             responseDiv.innerHTML = `Web search settings updated successfully! New settings:<br>Status: <b>${status}</b>, Pages: <b>${pages}</b>`;
         } else {

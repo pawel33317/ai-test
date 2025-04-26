@@ -179,6 +179,16 @@ button:hover {
     font-weight: 500;
 }
 
+.response.search-message {
+    background-color: #f3dbfc; /* Light blue background for system messages */
+    border-left: 4px solid #f69be8;
+}
+
+.response.search-message a{
+    color : #347adb;
+    text-decoration: none;
+}
+
 .response.chat-message {
     background-color: #e8f4fc; /* Light blue background for system messages */
     border-left: 4px solid #3498db;
