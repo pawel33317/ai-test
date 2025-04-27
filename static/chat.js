@@ -25,6 +25,11 @@ const StatusManager = {
     }
 };
 
+function scrollToBottom() {
+    const container = document.querySelector('.responses-container');
+    container.scrollTop = container.scrollHeight;
+}
+
 // Message handling
 const MessageManager = {
     createMessageElement(className, text) {
@@ -63,7 +68,7 @@ const MessageManager = {
                     responseDiv = MessageManager.createMessageElement('chat-message', '');
                 }
                 responseDiv.textContent += chunk.replace(/^data: /gm, '');
-                responseDiv.scrollIntoView({ behavior: 'smooth' });
+                scrollToBottom();
             }
         }
     }
@@ -200,5 +205,6 @@ document.getElementById('prompt').addEventListener('keydown', function(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault(); // Zapobiega dodaniu nowej linii
         document.querySelector('#chat-form button[type="submit"]').click(); // Kliknij przycisk "Send"
+        this.value = '';
     }
 });

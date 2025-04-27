@@ -20,7 +20,11 @@
             </div>
             <div class="system-prompt-panel">
                 <h2>AI model</h2>
-                <input type="text" id="ai-model" name="ai-model" value="deepseek-r1" required>
+                <select id="ai-model" name="ai-model" required>
+                    <option value="gemma3:12b">gemma3:12b</option>
+                    <option value="deepseek-r1" selected>deepseek-r1</option>
+                    <option value="gemma3:4b">gemma3:4b</option>
+                </select>
                 <button id="apply-ai-model">Apply</button>
             </div>
             <div class="system-prompt-panel">
