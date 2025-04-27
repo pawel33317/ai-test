@@ -92,6 +92,7 @@ async def handle_web_search(prompt, FINAL_MESSAGES):
         return
 
     outer_break = False  # Flag to break the outer loop
+    error_count = 0
     for url in urls:
         if outer_break:  # Check if the outer loop should break
             break
@@ -102,7 +103,7 @@ async def handle_web_search(prompt, FINAL_MESSAGES):
             # Split content into overlapping chunks
             chunks = []
             chunk_size = 1000
-            overlap = 100
+            overlap = 200
             for i in range(0, len(urlContent), chunk_size - overlap):
                 chunk = urlContent[i:i + chunk_size]
                 chunks.append(chunk)
@@ -113,7 +114,13 @@ async def handle_web_search(prompt, FINAL_MESSAGES):
                 aiDebug.debug_print(f"   Processing chunk, len: {len(chunk)}: {chunk[:100]}")
                 messages=[{'role': 'system', 'content': aiConfig.SYSTEM_PROMPT},
                           {'role': 'user', 'content': aiPrompts.get_is_the_answer_in_text_prompt(prompt, chunk)}]
-                answer, _ = aiApi.get_model_answer(messages)
+                answer, error = aiApi.get_model_answer(messages)
+                if error:
+                    error_count += 1
+                    aiDebug.debug_print(f"   Error in model response: {error}")
+                    if error_count >= 3:
+                        yield "meta: <b>Too many errors, stopping search</b>"
+                        exit()   
                 if answer.lower().startswith("yes"):
                     yield f"meta: <a href='{url}'>{url}</a>\n"
                     FINAL_MESSAGES.append({"role": "user", "content": aiPrompts.get_data_from_internet_prompt(chunk)})

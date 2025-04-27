@@ -5,7 +5,7 @@ import aiDebug
 def print_debug_message(messages):
     aiDebug.debug_print(f" New request to model: ")
     for message in messages:
-        aiDebug.debug_print(f"   {message['role']} : {message['content'][:100]}")
+        aiDebug.debug_print(f"   {message['role']} : {message['content'][:10000]}")
 
 def get_model_answer_stream(messages):
     print_debug_message(messages)
@@ -24,7 +24,6 @@ def get_model_answer_stream(messages):
 
 def get_model_answer(messages):
     print_debug_message(messages)
-    error = False
     try:
         response = ollama.chat(
             model=aiConfig.AI_MODEL,
@@ -32,9 +31,7 @@ def get_model_answer(messages):
             stream=False
         )
         aiDebug.debug_print(f"   ANSWER: {response['message']['content'][:100]}")
-        aiDebug
+        return response['message']['content'], False
     except Exception as e:
         aiDebug.debug_print(f"   Error during ollama.chat: {e}")
-        error = True
-
-    return response['message']['content'], error
+        return "No", True
