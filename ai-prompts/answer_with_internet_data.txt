@@ -1,0 +1,4 @@
+Use only the provided context to answer the user's question.
+If the information is not in the context, reply with 'Nie wiem'.
+
+Question: {{question}}

@@ -1,14 +1,10 @@
-Aktualne informacje z Internetu:
+Current information from the Internet: 
 {{information}}
 
-
-Czy na podstawie dostarczonych informacji z Internetu możesz odpowiedzieć na poniższe pytanie:
-
-
+Based on the information provided from the Internet, can you answer the following question:
 "{{question}}"
 
-
-Twoją odpowiedzią ma być tylko jedno słowo "tak" lub "nie".
-Odpowiedz "tak", jeżeli na podstawie załączonych informacji jesteś w stanie odpowiedzieć na to pytanie.
-Odpowiedz "nie", jeżeli załączone informacje nie są wystarczające żeby odpowiedzieć na to pytanie.
-Odpowiedź ma zawierać tylko jedno słowo: tak albo nie.
+Your response should be only one word, "yes" or "no."
+Answer "yes" if you are able to answer this question based on the information provided.
+Answer "no" if the information provided is not sufficient to answer this question.
+The answer must contain only one word: yes or no.

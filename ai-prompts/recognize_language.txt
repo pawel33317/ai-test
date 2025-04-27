@@ -1,0 +1,4 @@
+Recognize the language of the below question:
+As a answer write only one word withe the name of the question's language for an instance "Polski", "English", "German".
+
+Question: "{{data}}"

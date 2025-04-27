@@ -1,0 +1,2 @@
+Up to date data from the Internet ({{current_date}}):
+{{data}}

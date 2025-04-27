@@ -1,11 +1,7 @@
-Twoja wiedza jest jedynie do dnia 01.06.2023 
-Dzisiaj jest {{current_date}}.
+Your knowledge cutoff is 01.06.2023. Today's date is {{current_date}}.
+Evaluate this qiestion: "{{question}}"
 
-Oceń to pytanie: "{{question}}"
-
-Masz wypisac tylko 1 słowo "tak" lub "nie"
-
-Jeżli odpowiedź na to pytanie mogła się zmienić między 01.06.2023 a {{current_date}} odpowiedz "nie".
-Jeżeli odpowiedź na to pytanie nie mogła się zmienić między 01.06.2023 a {{current_date}} odpowiedz "tak"
-
-Odpowiedź ma zawierać tylko jedno słowo: tak albo nie.
+You must write only 1 word "yes" or "no"
+If the answer to this question could change between 01.06.2023 and {{current_date}} answer "no".
+If the answer to this question could not change between 01.06.2023 a {{current_date}} answer "yes"
+The answer must contain only one word: yes or no.

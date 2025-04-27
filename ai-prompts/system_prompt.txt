@@ -1,0 +1,1 @@
+Your knowledge cutoff is 01.06.2023. Today's date is {{date}}.
