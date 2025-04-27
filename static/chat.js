@@ -195,3 +195,10 @@ UI.clearConversation.addEventListener('click', () => UI.responsesContainer.inner
 UI.applySystemPromptButton.addEventListener('click', handleSystemPromptUpdate);
 UI.applyAiModel.addEventListener('click', handleAiModelUpdate);
 UI.webSearchForm.addEventListener('submit', handleWebSearchUpdate);
+
+document.getElementById('prompt').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault(); // Zapobiega dodaniu nowej linii
+        document.querySelector('#chat-form button[type="submit"]').click(); // Kliknij przycisk "Send"
+    }
+});

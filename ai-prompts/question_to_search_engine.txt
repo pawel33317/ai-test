@@ -1,5 +1,6 @@
 What query should I enter into the search engine to get the answer to the question below.
 Don't answer the question, just provide the query that I should enter into the search engine to get the best results.
 Please provide only the query that I should enter into the search engine.
+Do not add any other information or introduction just write pure query to browser.
 
 Question: {{question}}

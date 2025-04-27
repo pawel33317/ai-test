@@ -30,8 +30,12 @@ def get_model_answer(messages):
             messages=messages,
             stream=False
         )
-        aiDebug.debug_print(f"   ANSWER: {response['message']['content'][:100]}")
-        return response['message']['content'], False
+        aiDebug.debug_print(f"   ANSWER: {response['message']['content']}")
+        answer = response['message']['content']
+        if "</think>" in answer:#for deep thinking models like deepseek-r1
+            answer = answer.split("</think>", 1)[1].strip()
+            aiDebug.debug_print(f"   ANSWER without <think></think>: {answer}")
+        return answer, False
     except Exception as e:
         aiDebug.debug_print(f"   Error during ollama.chat: {e}")
         return "No", True

@@ -4,4 +4,5 @@ DEBUG = True
 SYSTEM_PROMPT = aiPrompts.get_system_prompt(None)
 WEB_SEARCH_STATUS = "auto"
 WEB_SEARCH_PAGES = 10
-AI_MODEL = "gemma3:4b"
+# AI_MODEL = "gemma3:4b"
+AI_MODEL = "deepseek-r1"

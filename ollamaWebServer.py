@@ -31,11 +31,14 @@ async def chat_stream(
     async def stream():
         aiDebug.debug_print(f"Received prompt: {prompt[:80]}")
         messages = [{"role": "system", "content": aiConfig.SYSTEM_PROMPT}]
-        search_needed = determine_search_needed(prompt)
 
         # Add conversation history if available
         if user_questions and user_responses:
             add_conversation_history(messages, user_questions, user_responses)
+
+        search_needed = determine_search_needed(prompt, messages)
+
+
 
         # Perform web search if needed
         if search_needed:
@@ -51,11 +54,11 @@ async def chat_stream(
 
     return StreamingResponse(stream(), media_type="text/event-stream")
 
-def determine_search_needed(prompt):
+def determine_search_needed(prompt, messages_history):
+    messages = messages_history.copy()
     if aiConfig.WEB_SEARCH_STATUS == "auto":
         aiDebug.debug_print(f"--- WEB SEARCH NECESSITY CHECK ---")
-        messages=[{"role": "system", "content": aiConfig.SYSTEM_PROMPT},
-                  {"role": "user", "content": aiPrompts.get_do_you_know_the_answer_prompt(prompt)}]
+        messages.append({"role": "user", "content": aiPrompts.get_do_you_know_the_answer_prompt(prompt)})
         answer, _ = aiApi.get_model_answer(messages)
         return answer.lower().startswith("no")
     return aiConfig.WEB_SEARCH_STATUS == "always"
